@@ -22,10 +22,7 @@ export function AuthProvider({ children }) {
 
       setLoading(true);
       try {
-        const token = await user.getIdToken();
-        const { data } = await api.get('/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const { data } = await api.get('/users/me');
         setProfile(data);
       } catch {
         setProfile(null);
