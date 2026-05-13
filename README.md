@@ -124,3 +124,70 @@ Conclusão do fluxo do aluno sem login, emissão de certificados e consultas de 
 /frontend -> Interface React e integração com a API
 /docs     -> Documentação de apoio (arquitetura, testes)
 ```
+
+---
+
+## Como rodar
+
+Pré-requisitos: Node.js 20+, npm e Git. Docker é opcional (apenas para subir o MongoDB).
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/EnioFelipe/oficina02-ellp.git
+cd oficina02-ellp
+```
+
+### 2. Subir o MongoDB
+
+Com Docker:
+
+```bash
+docker compose up -d
+```
+
+O Mongo fica disponível em `mongodb://localhost:27017`. Para parar: `docker compose down`.
+
+Sem Docker, basta ter um MongoDB local rodando na porta 27017 (ou ajustar `MONGODB_URI` no `.env` do backend).
+
+### 3. Credencial do Firebase (backend)
+
+O backend usa o Firebase Admin SDK. Coloque o arquivo `serviceAccountKey.json` em `backend/` (ele está no `.gitignore` e não vai para o repositório).
+
+Alternativa: preencher `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` no `.env` do backend em vez de usar o arquivo.
+
+### 4. Variáveis de ambiente
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+No `frontend/.env`, preencha as chaves `VITE_FIREBASE_*` com os valores do app web do projeto Firebase.
+
+### 5. Backend
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+API em `http://localhost:4000`. Endpoint de verificação: `GET /health`.
+
+### 6. Frontend
+
+Em outro terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Aplicação em `http://localhost:5173`.
+
+### Observações
+
+- Sem `.env` válido e sem credencial do Firebase, o backend não sobe.
+- Para criar contas de teste, use `/cadastro`. O login fica em `/login` e a área autenticada em `/interno`.
