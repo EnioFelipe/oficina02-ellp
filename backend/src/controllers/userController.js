@@ -7,3 +7,11 @@ export async function createUser(req, res, next) {
     next(error);
   }
 }
+
+export async function getMe(req, res, next) {
+  try {
+    res.json(req.user);
+  } catch (error) {
+    next(error);
+  }
+}
