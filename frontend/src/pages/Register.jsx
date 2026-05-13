@@ -23,7 +23,7 @@ export default function Register() {
         type: form.type,
         firebaseUid: credential.user.uid
       });
-      navigate('/');
+      navigate('/login');
     } catch (err) {
       if (credential?.user) await deleteUser(credential.user).catch(() => {});
       setError(errorMessage(err));
@@ -42,7 +42,7 @@ export default function Register() {
         <label>Senha<input type="password" minLength={6} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label>
         <label>Perfil<select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}><option value="tutor">Tutor</option><option value="professor">Professor</option></select></label>
         <button type="submit" disabled={loading}>{loading ? 'Criando...' : 'Criar conta'}</button>
-        <Link to="/">Voltar ao inicio</Link>
+        <Link to="/login">Ja tenho conta</Link>
       </form>
     </main>
   );
