@@ -16,7 +16,7 @@ export default function Login() {
     setError('');
     try {
       await login(form.email, form.password);
-      navigate('/');
+      navigate('/interno');
     } catch (err) {
       setError(errorMessage(err));
     } finally {

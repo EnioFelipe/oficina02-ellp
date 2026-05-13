@@ -1,7 +1,9 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext.jsx';
+import Interno from './pages/Interno.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 function Home() {
   const { loading, profile, isAuthenticated } = useAuth();
@@ -18,16 +20,23 @@ function Home() {
     <main style={{ padding: '1.5rem', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: '1.25rem', margin: 0 }}>ELLP</h1>
       {isAuthenticated && profile ? (
-        <p style={{ marginTop: '0.75rem', color: '#444' }}>
-          Logado como <strong>{profile.name}</strong> ({profile.type}).
-        </p>
+        <>
+          <p style={{ marginTop: '0.75rem', color: '#444' }}>
+            Logado como <strong>{profile.name}</strong> ({profile.type}).
+          </p>
+          <p style={{ marginTop: '1rem' }}>
+            <Link to="/interno" style={{ color: '#0264be', fontWeight: 700 }}>Area interna</Link>
+          </p>
+        </>
       ) : (
-        <p style={{ marginTop: '0.5rem', color: '#444' }}>Frontend em construcao.</p>
+        <>
+          <p style={{ marginTop: '0.5rem', color: '#444' }}>Frontend em construcao.</p>
+          <p style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <Link to="/cadastro" style={{ color: '#0264be', fontWeight: 700 }}>Cadastro</Link>
+            <Link to="/login" style={{ color: '#0264be', fontWeight: 700 }}>Entrar</Link>
+          </p>
+        </>
       )}
-      <p style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <Link to="/cadastro" style={{ color: '#0264be', fontWeight: 700 }}>Cadastro</Link>
-        <Link to="/login" style={{ color: '#0264be', fontWeight: 700 }}>Entrar</Link>
-      </p>
     </main>
   );
 }
@@ -39,6 +48,14 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Register />} />
+        <Route
+          path="/interno"
+          element={
+            <ProtectedRoute>
+              <Interno />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
