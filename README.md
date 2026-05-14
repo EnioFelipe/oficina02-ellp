@@ -129,9 +129,9 @@ Conclusão do fluxo do aluno sem login, emissão de certificados e consultas de 
 
 ## Como rodar
 
-Pré-requisitos: Node.js 20+, npm e Git. Docker é opcional (apenas para subir o MongoDB).
+Requisitos: Node.js 20+, npm, Git e Docker.
 
-### 1. Clonar o repositório
+### 1. Clonar
 
 ```bash
 git clone https://github.com/EnioFelipe/oficina02-ellp.git
@@ -140,32 +140,30 @@ cd oficina02-ellp
 
 ### 2. Subir o MongoDB
 
-Com Docker:
-
 ```bash
 docker compose up -d
 ```
 
-O Mongo fica disponível em `mongodb://localhost:27017`. Para parar: `docker compose down`.
+Mongo em `mongodb://localhost:27017`. Para parar: `docker compose down`.
 
-Sem Docker, basta ter um MongoDB local rodando na porta 27017 (ou ajustar `MONGODB_URI` no `.env` do backend).
+### 3. Firebase
 
-### 3. Credencial do Firebase (backend)
+Criar um projeto no [Firebase Console](https://console.firebase.google.com/), habilitar **Authentication > E-mail/senha** e gerar uma chave do **Admin SDK** (Configurações do projeto > Contas de serviço > Gerar nova chave privada).
 
-O backend usa o Firebase Admin SDK. Coloque o arquivo `serviceAccountKey.json` em `backend/` (ele está no `.gitignore` e não vai para o repositório).
+Salvar o JSON baixado como `backend/serviceAccountKey.json`.
 
-Alternativa: preencher `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` no `.env` do backend em vez de usar o arquivo.
+### 4. Backend
 
-### 4. Variáveis de ambiente
+Criar `backend/.env`:
 
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+```
+MONGODB_URI=mongodb://localhost:27017/oficina02
+FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccountKey.json
+FRONTEND_URL=http://localhost:5173
+PORT=4000
 ```
 
-No `frontend/.env`, preencha as chaves `VITE_FIREBASE_*` com os valores do app web do projeto Firebase.
-
-### 5. Backend
+Subir a API:
 
 ```bash
 cd backend
@@ -173,9 +171,19 @@ npm install
 npm run dev
 ```
 
-API em `http://localhost:4000`. Endpoint de verificação: `GET /health`.
+API em `http://localhost:4000`. Health check: `GET /health`.
 
-### 6. Frontend
+### 5. Frontend
+
+Criar `frontend/.env` com os dados do app web do mesmo projeto Firebase (Configurações do projeto > Seus apps > Web):
+
+```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_APP_ID=
+VITE_API_URL=http://localhost:4000
+```
 
 Em outro terminal:
 
@@ -185,9 +193,11 @@ npm install
 npm run dev
 ```
 
-Aplicação em `http://localhost:5173`.
+App em `http://localhost:5173`. Cadastro em `/cadastro`, login em `/login`, área interna em `/interno`.
 
-### Observações
+### Testes
 
-- Sem `.env` válido e sem credencial do Firebase, o backend não sobe.
-- Para criar contas de teste, use `/cadastro`. O login fica em `/login` e a área autenticada em `/interno`.
+```bash
+cd backend
+npm test
+```
