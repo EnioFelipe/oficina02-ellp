@@ -10,6 +10,7 @@ app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/users', userRoutes);
+app.use('/workshops', workshopRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
