@@ -4,6 +4,8 @@ import Interno from './pages/Interno.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
+import Workshops from './pages/Workshops.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 
 function Home() {
   const { loading, profile, isAuthenticated } = useAuth();
@@ -48,6 +50,8 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Register />} />
+        <Route path="/workshops" element={<Workshops />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route
           path="/interno"
           element={
