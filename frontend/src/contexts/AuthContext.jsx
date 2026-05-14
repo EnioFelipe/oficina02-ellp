@@ -1,7 +1,7 @@
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { auth } from '../config/firebase.js';
-import { api } from '../services/api.js';
+import { auth } from '../config/firebase';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -15,20 +15,15 @@ export function AuthProvider({ children }) {
       setFirebaseUser(user);
       setProfile(null);
 
-      if (!user) {
-        setLoading(false);
-        return;
+      if (user) {
+        try {
+          setProfile(await api.get('/users/me').then((res) => res.data));
+        } catch (_error) {
+          setProfile(null);
+        }
       }
 
-      setLoading(true);
-      try {
-        const { data } = await api.get('/users/me');
-        setProfile(data);
-      } catch {
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     });
   }, []);
 
@@ -36,28 +31,35 @@ export function AuthProvider({ children }) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
+  async function register({ name, email, password, type }) {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    const createdProfile = await api.post('/users', {
+      name,
+      email,
+      type,
+      firebaseUid: credential.user.uid
+    }).then((res) => res.data);
+    setProfile(createdProfile);
+  }
+
   async function logout() {
     await signOut(auth);
     setProfile(null);
   }
 
-  const value = useMemo(
-    () => ({
-      firebaseUser,
-      profile,
-      loading,
-      isAuthenticated: Boolean(firebaseUser),
-      login,
-      logout
-    }),
-    [firebaseUser, profile, loading]
-  );
+  const value = useMemo(() => ({
+    firebaseUser,
+    profile,
+    loading,
+    isAuthenticated: Boolean(firebaseUser),
+    login,
+    register,
+    logout
+  }), [firebaseUser, profile, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth deve ser usado dentro de AuthProvider');
-  return ctx;
+  return useContext(AuthContext);
 }
