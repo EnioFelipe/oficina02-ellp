@@ -1,12 +1,33 @@
-import React from "react";
+import { Link } from 'react-router-dom';
+import { Users, Wrench } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export default function Dashboard() {
+  const { profile } = useAuth();
+  const canSeeUsers = profile?.type === 'professor' || profile?.type === 'tutor';
+
   return (
-    <main style={{ padding: '1.5rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1 style={{ fontSize: '1.25rem', margin: 0 }}>ELLP</h1>
-        <>
-          <p style={{ marginTop: '0.5rem', color: '#444' }}>Frontend em construção - Futuro menu principal do sistema</p>
-        </>
-    </main>
+    <section className="stack">
+      <div className="pageHeader">
+        <h1>Olá, {profile?.name}</h1>
+        <span className="badge">{profile?.type}</span>
+      </div>
+      <div className="panel stack">
+        <p style={{ margin: 0, color: '#64748b' }}>
+          Use o menu ao lado ou os atalhos abaixo para gerenciar oficinas e usuários internos.
+        </p>
+        <motionlessLinks canSeeUsers={canSeeUsers} />
+      </div>
+    </section>
+  );
+}
+
+function motionlessLinks({ canSeeUsers }) {
+  return (
+    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <Link className="button" to="/oficinas"><Wrench size={16} /> Oficinas</Link>
+      {canSeeUsers && <Link className="button secondary" to="/usuarios"><Users size={16} /> Usuários</Link>}
+      <Link className="button secondary" to="/workshops">Ver oficinas públicas</Link>
+    </div>
   );
 }
