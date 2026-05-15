@@ -83,6 +83,23 @@ Base funcional do sistema: autenticação, controle de acesso por perfil, cadast
 | RFS1-10 | Vínculo e remoção de tutores em uma oficina, evitando duplicidade. |
 
 ---
+## Planejamento da Sprint 01
+
+Período: 30/04 (reunião com o professor) → 15/05 (entrega da sprint).
+
+| Período | Etapa | RFs |
+| --- | --- | --- |
+| 30/04 | Reunião com o professor: validação de escopo, arquitetura e tecnologias | — |
+| 02-04/05 | Setup do projeto: Docker, MongoDB, estrutura inicial do backend (Express) e frontend (React + Vite), integração com Firebase | — |
+| 05-07/05 | Cadastro, login e middleware de autenticação (token + proteção das telas internas) | RFS1-01, RFS1-02, RFS1-03, RFS1-04 |
+| 08-10/05 | Permissões por perfil e gestão de usuários internos (consulta, detalhe, edição, exclusão) | RFS1-05, RFS1-06, RFS1-07 |
+| 11-13/05 | Oficinas: consulta pública, CRUD e vínculo de tutores | RFS1-08, RFS1-09, RFS1-10 |
+| 14/05 | Testes de integração da API, testes unitários nas regras de negócio e ajustes finais | — |
+| 15/05 | Apresentação (10 min) e fechamento da Sprint 01 | — |
+
+---
+
+
 
 ## Sprint 02 - entregas previstas
 
