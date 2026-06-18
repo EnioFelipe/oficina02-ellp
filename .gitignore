@@ -1,32 +1,6 @@
-# Dependencias
 node_modules/
-
-# Build
 dist/
-build/
-
-# Variaveis de ambiente
 .env
-.env.local
-.env.*.local
-
-# Credenciais do Firebase Admin
-serviceAccountKey.json
-firebase-adminsdk-*.json
-
-# Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Cobertura de testes
-coverage/
-
-# Sistema operacional
 .DS_Store
-Thumbs.db
-
-# IDEs
-.vscode/
-.idea/
+coverage/

@@ -1,6 +1,6 @@
 {
   "name": "oficina02-frontend",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,16 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
     "axios": "^1.7.9",
     "firebase": "^11.1.0",
-    "lucide-react": "^1.14.0",
+    "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
-    "react-toastify": "^11.1.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
+    "react-toastify": "^11.0.2",
     "vite": "^6.0.7"
-  }
+  },
+  "devDependencies": {}
 }

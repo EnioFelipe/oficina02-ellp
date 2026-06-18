@@ -1,33 +1,35 @@
-import { Link } from 'react-router-dom';
-import { Users, Wrench } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { Award, CheckCircle2, Users, Wrench } from 'lucide-react';
+import Loading from '../components/ui/Loading.jsx';
+import Table from '../components/ui/Table.jsx';
+import { useAsync } from '../hooks/useAsync';
+import { reportsService } from '../services/reports';
 
 export default function Dashboard() {
-  const { profile } = useAuth();
-  const canSeeUsers = profile?.type === 'professor' || profile?.type === 'tutor';
+  const dashboard = useAsync(() => reportsService.dashboard(), []);
+  const history = useAsync(() => reportsService.history(), []);
+
+  if (dashboard.loading || history.loading) return <Loading />;
+
+  const stats = dashboard.data || {};
 
   return (
     <section className="stack">
-      <div className="pageHeader">
-        <h1>Olá, {profile?.name}</h1>
-        <span className="badge">{profile?.type}</span>
+      <div className="pageHeader"><h1>Dashboard</h1></div>
+      <div className="statsGrid">
+        <article><Wrench /><strong>{stats.totalWorkshops || 0}</strong><span>Oficinas</span></article>
+        <article><CheckCircle2 /><strong>{stats.activeWorkshops || 0}</strong><span>Ativas</span></article>
+        <article><Award /><strong>{stats.finishedWorkshops || 0}</strong><span>Finalizadas</span></article>
+        <article><Users /><strong>{stats.participants || 0}</strong><span>Participantes</span></article>
       </div>
-      <div className="panel stack">
-        <p style={{ margin: 0, color: '#64748b' }}>
-          Use o menu ao lado ou os atalhos abaixo para gerenciar oficinas e usuários internos.
-        </p>
-        <motionlessLinks canSeeUsers={canSeeUsers} />
-      </div>
+      <Table
+        columns={[
+          { key: 'name', label: 'Oficina' },
+          { key: 'date', label: 'Data', render: (row) => new Date(row.date).toLocaleDateString('pt-BR') },
+          { key: 'status', label: 'Status' },
+          { key: 'professor', label: 'Responsável', render: (row) => row.professor?.name }
+        ]}
+        rows={history.data || []}
+      />
     </section>
-  );
-}
-
-function motionlessLinks({ canSeeUsers }) {
-  return (
-    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-      <Link className="button" to="/oficinas"><Wrench size={16} /> Oficinas</Link>
-      {canSeeUsers && <Link className="button secondary" to="/usuarios"><Users size={16} /> Usuários</Link>}
-      <Link className="button secondary" to="/workshops">Ver oficinas públicas</Link>
-    </div>
   );
 }
