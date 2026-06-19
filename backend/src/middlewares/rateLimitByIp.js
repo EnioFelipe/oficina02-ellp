@@ -1,5 +1,9 @@
 const buckets = new Map();
 
+export function clearRateLimitBuckets() {
+  buckets.clear();
+}
+
 export function rateLimitByIp({ windowMs = 60000, max = 20 } = {}) {
   return (req, _res, next) => {
     const key = req.ip || req.connection.remoteAddress || 'unknown';

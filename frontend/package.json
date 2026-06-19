@@ -1,23 +1,28 @@
 {
   "name": "oficina02-frontend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
     "axios": "^1.7.9",
     "firebase": "^11.1.0",
-    "lucide-react": "^0.469.0",
+    "lucide-react": "^1.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
-    "react-toastify": "^11.0.2",
-    "vite": "^6.0.7"
+    "react-toastify": "^11.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "mongoose": "^8.9.2",
+    "vite": "^6.0.7"
+  }
 }
