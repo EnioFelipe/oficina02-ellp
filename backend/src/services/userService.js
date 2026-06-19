@@ -7,10 +7,12 @@ async function ensureUniqueUser({ email, firebaseUid }, ignoredId) {
   if (firebaseUid) checks.push({ firebaseUid });
   if (!checks.length) return;
 
-  const duplicated = await User.findOne({
-    _id: { $ne: ignoredId },
-    $or: checks
-  });
+  const filter = { $or: checks };
+  if (ignoredId !== undefined && ignoredId !== null) {
+    filter._id = { $ne: ignoredId };
+  }
+
+  const duplicated = await User.findOne(filter);
 
   if (duplicated) {
     throw new HttpError(409, 'E-mail ou UID do Firebase ja cadastrado');

@@ -21,6 +21,7 @@ export default function Dashboard() {
         <article><Award /><strong>{stats.finishedWorkshops || 0}</strong><span>Finalizadas</span></article>
         <article><Users /><strong>{stats.participants || 0}</strong><span>Participantes</span></article>
       </div>
+      <h2 style={{ margin: '8px 0 0', fontSize: '1rem' }}>Histórico de oficinas</h2>
       <Table
         columns={[
           { key: 'name', label: 'Oficina' },
