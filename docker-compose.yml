@@ -1,12 +1,13 @@
 services:
-  mongo:
+  mongodb:
     image: mongo:7
-    container_name: oficina02-mongo
-    restart: unless-stopped
+    container_name: oficina02-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: oficina02
     ports:
       - "27017:27017"
     volumes:
-      - oficina02-mongo-data:/data/db
+      - mongodb_data:/data/db
 
 volumes:
-  oficina02-mongo-data:
+  mongodb_data:

@@ -1,11 +1,11 @@
-import { Gauge, Users, Wrench } from 'lucide-react';
+import { Award, BarChart3, Gauge, Search, Users, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import styles from './Layout.module.css';
 
 export default function Sidebar() {
   const { profile } = useAuth();
-  const canSeeUsers = ['professor', 'tutor'].includes(profile?.type);
+  const canManage = ['professor', 'tutor'].includes(profile?.type);
 
   return (
     <aside className={styles.sidebar}>
@@ -16,7 +16,10 @@ export default function Sidebar() {
       <nav>
         <NavLink to="/dashboard"><Gauge size={18} /> Dashboard</NavLink>
         <NavLink to="/oficinas"><Wrench size={18} /> Oficinas</NavLink>
-        {canSeeUsers && <NavLink to="/usuarios"><Users size={18} /> Usuários</NavLink>}
+        {canManage && <NavLink to="/usuarios"><Users size={18} /> Usuários</NavLink>}
+        {canManage && <NavLink to="/relatorios"><BarChart3 size={18} /> Relatórios</NavLink>}
+        <NavLink to="/consultar"><Search size={18} /> Consultar CPF</NavLink>
+        <NavLink to="/certificados"><Award size={18} /> Certificados</NavLink>
       </nav>
     </aside>
   );

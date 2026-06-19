@@ -210,11 +210,41 @@ npm install
 npm run dev
 ```
 
-App em `http://localhost:5173`. Cadastro em `/cadastro`, login em `/login`, área interna em `/interno`.
+App em `http://localhost:5173`. Cadastro em `/cadastro`, login em `/login`, área interna em `/dashboard`.
 
 ### Testes
 
+**Backend (integração + unitários)**
+
+Usa Jest, Supertest e MongoDB em memória. O Firebase é mockado; rotas, services e banco rodam de verdade.
+
 ```bash
 cd backend
+npm install
 npm test
+```
+
+Cobertura:
+
+```bash
+npm run test:coverage
+```
+
+**E2E (Playwright)**
+
+Fluxo crítico: inscrição pública → finalizar oficina → consulta por CPF → download do certificado.
+
+Requisitos: Docker com MongoDB rodando (`docker compose up -d`). O Playwright sobe backend e frontend automaticamente.
+
+```bash
+cd frontend
+npm install
+npx playwright install chromium
+npm run test:e2e
+```
+
+O E2E usa o banco `oficina02-e2e` (separado do ambiente local). Para inspecionar a execução:
+
+```bash
+npm run test:e2e:ui
 ```

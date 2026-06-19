@@ -1,69 +1,78 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
+import { clearDb, closeMemoryDb, connectMemoryDb } from './helpers/db.js';
+import { clearRateLimitBuckets } from '../src/middlewares/rateLimitByIp.js';
 
 const verifyIdTokenMock = jest.fn();
-const findOneMock = jest.fn();
-const createMock = jest.fn();
 
 jest.unstable_mockModule('../src/config/firebase.js', () => ({
-  default: {
-    auth: () => ({
-      verifyIdToken: verifyIdTokenMock
-    })
-  }
-}));
-
-jest.unstable_mockModule('../src/models/User.js', () => ({
-  default: {
-    findOne: findOneMock,
-    create: createMock
-  }
-}));
-
-jest.unstable_mockModule('../src/routes/workshopRoutes.js', () => ({
-  default: (_req, _res, next) => next()
+  default: { auth: () => ({ verifyIdToken: verifyIdTokenMock }) }
 }));
 
 const { default: app } = await import('../src/app.js');
+const { default: User } = await import('../src/models/User.js');
 
-describe('API base', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+async function seedUsers() {
+  const professor = await User.create({
+    name: 'Ana Professora',
+    email: 'ana@example.com',
+    type: 'professor',
+    firebaseUid: 'uid-prof'
   });
+  const tutor = await User.create({
+    name: 'Tito Tutor',
+    email: 'tito@example.com',
+    type: 'tutor',
+    firebaseUid: 'uid-tutor'
+  });
+  return { professor, tutor };
+}
 
-  test('GET /health retorna status ok', async () => {
+function authAs(uid, token) {
+  verifyIdTokenMock.mockResolvedValue({ uid });
+  return {
+    get: (url) => request(app).get(url).set('Authorization', `Bearer ${token}`),
+    put: (url) => request(app).put(url).set('Authorization', `Bearer ${token}`),
+    delete: (url) => request(app).delete(url).set('Authorization', `Bearer ${token}`)
+  };
+}
+
+beforeAll(async () => {
+  await connectMemoryDb();
+});
+
+afterAll(async () => {
+  await closeMemoryDb();
+});
+
+afterEach(async () => {
+  await clearDb();
+  clearRateLimitBuckets();
+  jest.clearAllMocks();
+});
+
+describe('GET /health', () => {
+  test('retorna status ok', async () => {
     const response = await request(app).get('/health');
-
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ status: 'ok' });
   });
 });
 
 describe('POST /users', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('cria um usuario com dados validos', async () => {
+  test('cria usuario com dados validos', async () => {
     const payload = {
       name: 'Ana Professora',
       email: 'ana@example.com',
       type: 'professor',
       firebaseUid: 'firebase-uid-1'
     };
-    const createdUser = { _id: 'user-1', ...payload };
-
-    findOneMock.mockResolvedValue(null);
-    createMock.mockResolvedValue(createdUser);
 
     const response = await request(app).post('/users').send(payload);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual(createdUser);
-    expect(findOneMock).toHaveBeenCalledWith({
-      $or: [{ email: payload.email }, { firebaseUid: payload.firebaseUid }]
-    });
-    expect(createMock).toHaveBeenCalledWith(payload);
+    expect(response.body.email).toBe(payload.email);
+    expect(await User.countDocuments()).toBe(1);
   });
 
   test.each([
@@ -76,31 +85,30 @@ describe('POST /users', () => {
 
     expect(response.status).toBe(422);
     expect(response.body.message).toBe('Dados invalidos');
-    expect(response.body.errors).toEqual(expect.any(Array));
-    expect(createMock).not.toHaveBeenCalled();
+    expect(await User.countDocuments()).toBe(0);
   });
 
-  test('rejeita usuario com email ou firebaseUid ja cadastrado', async () => {
-    findOneMock.mockResolvedValue({ _id: 'existing-user' });
-
-    const response = await request(app).post('/users').send({
-      name: 'Ana Professora',
+  test('rejeita email ou firebaseUid duplicado (409)', async () => {
+    await request(app).post('/users').send({
+      name: 'Ana',
       email: 'ana@example.com',
       type: 'professor',
-      firebaseUid: 'firebase-uid-1'
+      firebaseUid: 'uid-1'
+    });
+
+    const response = await request(app).post('/users').send({
+      name: 'Ana 2',
+      email: 'ana@example.com',
+      type: 'tutor',
+      firebaseUid: 'uid-2'
     });
 
     expect(response.status).toBe(409);
-    expect(response.body.message).toBe('E-mail ou UID do Firebase ja cadastrado');
-    expect(createMock).not.toHaveBeenCalled();
+    expect(await User.countDocuments()).toBe(1);
   });
 });
 
 describe('rotas protegidas de usuarios', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   test.each([
     ['GET', '/users'],
     ['GET', '/users/me'],
@@ -115,7 +123,6 @@ describe('rotas protegidas de usuarios', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Token Firebase nao informado');
-    expect(verifyIdTokenMock).not.toHaveBeenCalled();
   });
 
   test('rejeita token Firebase invalido ou expirado', async () => {
@@ -127,12 +134,10 @@ describe('rotas protegidas de usuarios', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Token Firebase invalido ou expirado');
-    expect(verifyIdTokenMock).toHaveBeenCalledWith('token-invalido');
   });
 
-  test('rejeita token valido sem perfil cadastrado no MongoDB', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'firebase-uid-sem-perfil' });
-    findOneMock.mockResolvedValue(null);
+  test('rejeita token valido sem perfil cadastrado', async () => {
+    verifyIdTokenMock.mockResolvedValue({ uid: 'uid-inexistente' });
 
     const response = await request(app)
       .get('/users/me')
@@ -140,30 +145,84 @@ describe('rotas protegidas de usuarios', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Usuario nao cadastrado no sistema');
-    expect(findOneMock).toHaveBeenCalledWith({ firebaseUid: 'firebase-uid-sem-perfil' });
+  });
+
+  test('GET /users/me retorna perfil autenticado', async () => {
+    const { professor } = await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof').get('/users/me');
+
+    expect(response.status).toBe(200);
+    expect(response.body._id).toBe(professor._id.toString());
+    expect(response.body.email).toBe('ana@example.com');
+  });
+
+  test('GET /users lista usuarios com filtro por tipo', async () => {
+    await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof').get('/users?type=tutor');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].name).toBe('Tito Tutor');
+  });
+
+  test('GET /users filtra por busca de nome', async () => {
+    await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof').get('/users?search=Ana');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].type).toBe('professor');
+  });
+
+  test('GET /users/:id retorna detalhe do usuario', async () => {
+    const { tutor } = await seedUsers();
+
+    const response = await authAs('uid-tutor', 'token-tutor').get(`/users/${tutor._id}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.email).toBe('tito@example.com');
+  });
+
+  test('GET /users/:id inexistente retorna 404', async () => {
+    await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof').get('/users/64b7f0000000000000000000');
+
+    expect(response.status).toBe(404);
+  });
+
+  test('PUT /users/:id atualiza usuario como professor', async () => {
+    const { tutor } = await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof')
+      .put(`/users/${tutor._id}`)
+      .send({ name: 'Tito Atualizado', email: 'tito@example.com', type: 'tutor' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe('Tito Atualizado');
+  });
+
+  test('DELETE /users/:id remove usuario como professor', async () => {
+    const { tutor } = await seedUsers();
+
+    const response = await authAs('uid-prof', 'token-prof').delete(`/users/${tutor._id}`);
+
+    expect(response.status).toBe(204);
+    expect(await User.countDocuments()).toBe(1);
   });
 
   test.each([
-    ['PUT', '/users/user-1'],
-    ['DELETE', '/users/user-1']
-  ])('%s %s bloqueia tutor em rota exclusiva de professor', async (method, path) => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'firebase-uid-tutor' });
-    findOneMock.mockResolvedValue({
-      _id: 'user-tutor',
-      name: 'Tito Tutor',
-      email: 'tito@example.com',
-      type: 'tutor',
-      firebaseUid: 'firebase-uid-tutor'
-    });
+    ['PUT', 'put'],
+    ['DELETE', 'delete']
+  ])('%s bloqueia tutor em rota exclusiva de professor', async (_label, method) => {
+    const { tutor } = await seedUsers();
+    const client = authAs('uid-tutor', 'token-tutor');
 
-    const response = await request(app)
-      [method.toLowerCase()](path)
-      .set('Authorization', 'Bearer token-valido')
-      .send({
-        name: 'Tito Tutor',
-        email: 'tito@example.com',
-        type: 'tutor'
-      });
+    const response = await client[method](`/users/${tutor._id}`)
+      .send({ name: 'Tito', email: 'tito@example.com', type: 'tutor' });
 
     expect(response.status).toBe(403);
     expect(response.body.message).toBe('Acesso negado para este perfil');
