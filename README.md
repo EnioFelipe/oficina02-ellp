@@ -212,11 +212,26 @@ npm run dev
 
 App em `http://localhost:5173`. Cadastro em `/cadastro`, login em `/login`, área interna em `/dashboard`.
 
-### Testes
+## Testes
 
-**Backend (integração + unitários)**
+A estratégia segue a prioridade definida no planejamento: **testes de integração da API** como base, **testes unitários** nas regras de negócio puras e um **teste E2E** no fluxo crítico do usuário.
 
-Usa Jest, Supertest e MongoDB em memória. O Firebase é mockado; rotas, services e banco rodam de verdade.
+| Camada | Ferramentas | O que cobre |
+| --- | --- | --- |
+| Integração (API) | Jest + Supertest + mongodb-memory-server | Rotas, controllers, services e persistência reais |
+| Unitário | Jest | Regras isoladas: validação de CPF e rate limit |
+| E2E | Playwright | Fluxo completo no navegador (inscrição → certificado) |
+
+Números atuais: **9 suites, 65 testes** no backend, com cobertura de **~95% de linhas/statements** (`npm run test:coverage`).
+
+### Como os testes de integração funcionam
+
+- Cada suite sobe um **MongoDB em memória** (`mongodb-memory-server`) — não precisa de Docker nem do banco local.
+- O **Firebase Admin é mockado** (`jest.unstable_mockModule`), então a verificação de token é simulada e o restante (rotas, services, Mongoose) roda de verdade.
+- O banco é limpo a cada teste (`clearDb`) e os contadores de rate limit são zerados (`clearRateLimitBuckets`) para garantir isolamento.
+- Execução em série (`--runInBand`) para um ambiente de banco previsível.
+
+### Backend
 
 ```bash
 cd backend
@@ -224,17 +239,31 @@ npm install
 npm test
 ```
 
-Cobertura:
+Com relatório de cobertura:
 
 ```bash
 npm run test:coverage
 ```
 
-**E2E (Playwright)**
+### Suites do backend (`backend/tests/`)
 
-Fluxo crítico: inscrição pública → finalizar oficina → consulta por CPF → download do certificado.
+| Arquivo | Tipo | Cobre | RFs |
+| --- | --- | --- | --- |
+| `cpf.test.js` | Unitário | `sanitizeCpf` (remove pontuação) e `isValidCpf` (dígitos verificadores, repetidos, tamanho) | RFS2-02 |
+| `rateLimitByIp.test.js` | Unitário | Middleware de rate limit: libera até o limite, bloqueia com 429, reinicia após a janela, isola por IP | RFS2-13 |
+| `enrollmentRoutes.test.js` | Integração | Inscrição em oficina ativa, bloqueio em finalizada, CPF duplicado, CPF/nome inválidos, consulta por CPF e disponibilidade de certificado, listagem de inscritos autenticada | RFS2-01 a RFS2-07 |
+| `enrollmentRateLimit.test.js` | Integração | Limite por IP em `POST /enrollments` (429 ao exceder) | RFS2-13 |
+| `publicRateLimit.test.js` | Integração | Limite por IP na consulta por CPF e no download de certificado | RFS2-13 |
+| `certificateRoutes.test.js` | Integração | Gera PDF para inscrito em oficina finalizada, bloqueia oficina não finalizada (422), 404 sem inscrição, CPF inválido (422) | RFS2-08, RFS2-09 |
+| `reportRoutes.test.js` | Integração | Dashboard de totais, relatório de participantes por oficina e histórico — todos exigindo autenticação | RFS2-10, RFS2-11, RFS2-12 |
+| `workshopRoutes.test.js` | Integração | Oficinas: listagem/detalhe público, CRUD autenticado, vínculo/remoção de tutores sem duplicar | RFS1-08 a RFS1-10 |
+| `userRoutes.test.js` | Integração | `/health`, cadastro com validação, duplicidade, autenticação por token, perfil, filtros e permissões por perfil | RFS1-01 a RFS1-07, RFS2-14 |
 
-Requisitos: Docker com MongoDB rodando (`docker compose up -d`). O Playwright sobe backend e frontend automaticamente.
+### E2E (Playwright)
+
+Fluxo crítico ponta a ponta: **inscrição pública → finalização da oficina → consulta por CPF → download do certificado**.
+
+Requisitos: Docker com MongoDB rodando (`docker compose up -d`). O Playwright sobe backend e frontend automaticamente e usa um banco separado (`oficina02-e2e`), sem afetar o ambiente local.
 
 ```bash
 cd frontend
@@ -243,7 +272,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-O E2E usa o banco `oficina02-e2e` (separado do ambiente local). Para inspecionar a execução:
+Para inspecionar a execução com a UI do Playwright:
 
 ```bash
 npm run test:e2e:ui
